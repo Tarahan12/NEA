@@ -307,9 +307,10 @@ def play():
         txt_rect.topleft = (margin_x, margin_y + i * (fontsize + spacing_y))
         rendered_fonts.append((txt_surf, txt_rect))
 
-    
-    def show_user_name(user_answer, tries, score):
-        while tries > 0:
+    def check_answer(user_answer, score):
+        tries = 3
+        correct = False
+        while tries > 0 and not correct:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -317,26 +318,29 @@ def play():
                 new_text = pygame.font.SysFont("bahnschrift", 50).render("Correct Answer!", True, "green")
                 new_text_rect = new_text.get_rect(center=(WIDTH/2, HEIGHT/2))
                 window.blit(new_text, new_text_rect)
+                pygame.display.flip()
+                pygame.time.wait(1000)
                 score += 1
-                done_question = False
-                tries = 0
+                correct = True
             else:
-                new_text = pygame.font.SysFont("bahnschrift", 50).render("Oops! Try again...", True, "blue")
+                new_text = pygame.font.SysFont("bahnschrift", 50).render("Oops! Try again...", True, "red")
                 new_text_rect = new_text.get_rect(center=(WIDTH/2, HEIGHT/2))
                 window.blit(new_text, new_text_rect)
+                pygame.display.flip()
+                pygame.time.wait(1000)
                 score -= 1
-                tries -= 1
+            tries -= 1
 
-            
-        new_text = pygame.font.SysFont("bahnschrift", 50).render("Incorrect Answer!", True, "red")
-        new_text_rect = new_text.get_rect(center=(WIDTH/2, HEIGHT/2))
-        window.blit(new_text, new_text_rect)
-        clock.tick(60)
-        pygame.display.flip()
+        return score
 
-    def get_answer(tries, score):
-        done_question = True
-        while done_question:
+
+
+
+
+
+    def get_answer(score):
+        done_question = False
+        while not done_question:
             UI_REFRESH_RATE = clock.tick(60)/1000
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -344,9 +348,9 @@ def play():
                     sys.exit()
                 if (event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED and
                     event.ui_object_id == '#main_text_entry'):
-                    show_user_name(event.text, tries, score)
+                    score = check_answer(event.text, score)
+                    done_question = True
                 manager.process_events(event)
-                done_question = False
             manager.update(UI_REFRESH_RATE)
             window.fill("white")
             for txt_surf, txt_rect in rendered_fonts:
@@ -354,6 +358,11 @@ def play():
             manager.draw_ui(window)
             
             pygame.display.flip()
+
+        return score
+
+
+
 
 
 
@@ -448,8 +457,7 @@ def play():
         
         # gameplay
         if eat_food():
-            tries = 3
-            get_answer(tries, score)
+            get_answer(score)
 
 
         # draw player
